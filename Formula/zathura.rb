@@ -34,6 +34,29 @@ class Zathura < Formula
       s.gsub! "subdir('doc')", ""
     end
 
+    # Adding in the titlebar modifications
+
+    inreplace "zathura/zathura.c" do |s|
+      s.gsub! "GdkWindow* window = gtk_widget_get_window(zathura->ui.session->gtk.view);", "
+  GdkWindow* window = gtk_widget_get_window(zathura->ui.session->gtk.view);
+  GtkWidget* topLevelWidget = gtk_widget_get_toplevel(zathura->ui.session->gtk.view); // TopLevel is (in zathura) always a GtkWindow, so we just check to see if it is NULL to prevent crashing.
+  if (topLevelWidget == NULL) {
+    return;
+  }
+  gtk_window_set_titlebar(GTK_WINDOW(topLevelWidget), gtk_header_bar_new()); // Casting GtkWindow to the GtkWidget to fit the function and creating a new (empty) titlebar."
+    end
+
+    inreplace "data/zathura.css_t" do |s|
+      s.gsub! "\#@session@ .indexmode:selected {", "
+window {
+  border-radius: 10px;
+}
+\#@session@ .statusbar {
+  border-radius: 0px 0px 10px 10px; /* Rounding only the bottom corners to correlate with the window. */
+}
+\#@session@ .indexmode:selected {"
+    end
+
     mkdir "build" do
       system "meson", *std_meson_args, ".."
       system "ninja"
